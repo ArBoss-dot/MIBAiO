@@ -2,9 +2,9 @@
 #include "EEPROM.h"
 #include "BluetoothSerial.h"
 BluetoothSerial SerialBT;
-EEPROMClass ssId("NONE",0x25);
-EEPROMClass Pass("NONE",0x15);
-int address=1;
+EEPROMClass ssId("eeprom0",0x25);
+EEPROMClass Pass("eeprom1",0x15);
+int address=0;
   
 class WifiCredential{
   private:
@@ -18,7 +18,8 @@ class WifiCredential{
     }
     bool isWifiConfig()
     {
-       return EEPROM.readBool(address);
+//       return EEPROM.readBool(address);
+         return address;
        
     }
     String getSsid()
@@ -45,12 +46,13 @@ class WifiCredential{
           if(Serial.available())
         {
 //          SsID = SerialBT.readStringUntil('\n');
-          SsID = Serial.readStringUntil('\n');
+          SsID = Serial.readStringUntil(' ');
 //          Password = SerialBT.readStringUntil('\n');
-          Password = SerialBT.readStringUntil('\n');
+          Password = SerialBT.readStringUntil(' ');
           ssId.put(0,SsID);
           Pass.put(0,Password);
-          EEPROM.writeBool(address,true);
+//          EEPROM.writeBool(address,true);
+          address = 1;
         }
       }
       
@@ -69,8 +71,8 @@ class WifiCredential{
 void setup()
 {
   Serial.begin(115200);
-  EEPROM.begin(10);
-  EEPROM.writeBool(address,false);
+//  EEPROM.begin(1);
+//  EEPROM.writeBool(1,false);
 
 
   
