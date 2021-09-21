@@ -1,96 +1,102 @@
-//#include <EEPROM.h>
 #include "EEPROM.h"
 #include "BluetoothSerial.h"
+#include "WiFi.h"
 BluetoothSerial SerialBT;
-EEPROMClass ssId("eeprom0",0x25);
-EEPROMClass Pass("eeprom1",0x15);
-int address=0;
-  
-class WifiCredential{
+class WifiCerden{
   private:
-    String SsID,Password;
-    int address;
+    String SSId,Password;
+    bool credAvailStatus;
 
   public:
-    WifiCredential(int adds)
+    bool isCredAvil()
     {
-        address = adds;
+      credAvailStatus = EEPROM.readBool(1);
+      return credAvailStatus;
     }
-    bool isWifiConfig()
+    void displayAvailSSID()
     {
-//       return EEPROM.readBool(address);
-         return address;
-       
-    }
-    String getSsid()
-    {
-      ssId.get(0,SsID);
-      return SsID;
-    }
-    String getPass()
-    {
-      Pass.get(0,Password);
-      return Password;
-    }
-    void configWifiCreden()
-    {
-      if(!ssId.begin(ssId.length()) || !Pass.begin(Pass.length()))
+      WiFi.mode(WIFI_STA);
+      WiFi.disconnect();
+      delay(50);
+      int ssCount = WiFi.scanNetworks();
+      Serial.println("Scannig Done");
+      if(ssCount == 0)
       {
-        Serial.println("failed to intialise");
-        Serial.println("Restarting....");
+        Serial.println("No Networks Found");
       }
-      long long int pervMil = millis();
-      while((pervMil+30000)>millis()) //Wait for 30 sec to get input via BLT;
+      else
       {
-//        if(SerialBT.available())
-          if(Serial.available())
+        Serial.print(ssCount);Serial.println(" Networks Fount");
+        for (int i = 0; i < ssCount; ++i)
         {
-//          SsID = SerialBT.readStringUntil('\n');
-          SsID = Serial.readStringUntil(' ');
-//          Password = SerialBT.readStringUntil('\n');
-          Password = SerialBT.readStringUntil(' ');
-          ssId.put(0,SsID);
-          Pass.put(0,Password);
-//          EEPROM.writeBool(address,true);
-          address = 1;
+          // Print SSID and RSSI for each network found
+          Serial.print(i + 1);
+          Serial.print(": ");
+          Serial.print(WiFi.SSID(i));
+          Serial.print(" (");
+          Serial.print(WiFi.RSSI(i));
+          Serial.print(")");
+//          Serial.println((WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " " : "*");
+          delay(10);
         }
       }
-      
-      if(EEPROM.readBool(address))
-      {
-        Serial.println("SSID & PASSWORD Updated");
-        Serial.print("SSID : ");Serial.println(SsID);
-        Serial.print("Password : ");Serial.println(Password);
-      }
-      else{
-        Serial.print("SSID & PASSWORD Not Set Try again");
-      }
     }
+    void configWifiCredentials()
+    {
+      displayAvailSSID();
+      Serial.println("Please Enter SSID and Passwords with in a min in separete line");
+      long long int prev = millis();
+      while(prev + 60000 > millis())
+      {
+        if(Serial.available())
+        {
+          SSId = Serial.readStringUntil('\n');
+          Password = Serial.readStringUntil('\n');
+          Serial.print("Recived SSID = ");Serial.println(SSId);
+          Serial.print("Recived password = ");Serial.println(Password);
+          for (int i = 0; i < 96; ++i)
+          {
+            EEPROM.write(i, 0);
+          }
+          Serial.println("writing eeprom ssid:");
+          for (int i = 2; i < SSId.length(); ++i)
+          {
+            EEPROM.write(i, SSId[i]);
+            Serial.print("Wrote: ");
+            Serial.println(SSId[i]);
+          }
+          Serial.println("writing eeprom pass:");
+          for (int i = 2; i < Password.length(); ++i)
+          {
+            EEPROM.write(32 + i, Password[i]);
+            Serial.print("Wrote: ");
+            Serial.println(Password[i]);
+          }
+          EEPROM.writeBool(1,true);
+          EEPROM.commit();
+          break;
+        }
+      }
+    }    
 };
 
-void setup()
-{
+
+
+void setup() {
   Serial.begin(115200);
-//  EEPROM.begin(1);
-//  EEPROM.writeBool(1,false);
-
-
+  EEPROM.begin(100);
+  delay(10);
+  WifiCerden creden;
+  if(!creden.isCredAvil())
+  {
+    Serial.println("Wifi Credentials are not avilable");
+    creden.configWifiCredentials();
+  }
+  
   
 }
-void loop()
-{
-  
-  WifiCredential wiFi(address);
-  if(!wiFi.isWifiConfig())
-  {
-    wiFi.configWifiCreden();
-  }
-  else
-  {
-    Serial.println("Credentials are Available");
-    Serial.print("SSID : ");Serial.println(wiFi.getSsid());
-    Serial.print("Password : ");Serial.println(wiFi.getPass());
-  }
-  delay(1000);
-  
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
 }
