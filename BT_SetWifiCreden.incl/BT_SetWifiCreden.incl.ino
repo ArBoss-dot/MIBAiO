@@ -13,6 +13,25 @@ class WifiCerden{
       credAvailStatus = EEPROM.readBool(1);
       return credAvailStatus;
     }
+    String getSsid()
+    {
+      SSId ="";
+      for (int i = 2; i < 34; ++i)
+      {
+         SSId += char(EEPROM.read(i));
+      }
+      return SSId;
+    }
+    String getPass()
+    {
+      Password="";
+      for (int i = 34; i <98; ++i)
+      {
+         Password += char(EEPROM.read(i));
+      }
+      return Password;
+      
+    }
     void displayAvailSSID()
     {
       WiFi.mode(WIFI_STA);
@@ -91,6 +110,12 @@ void setup() {
   {
     Serial.println("Wifi Credentials are not avilable");
     creden.configWifiCredentials();
+  }
+  if(creden.isCredAvil())
+  {
+    Serial.println("Wifi Credentials are avilable");
+    Serial.print("SSID : ");Serial.println(creden.getSsid());
+    Serial.print("Password : ");Serial.println(creden.getPass());
   }
   
   
