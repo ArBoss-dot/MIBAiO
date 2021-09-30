@@ -6,6 +6,8 @@
  *  AceButton Library: https://github.com/bxparks/AceButton
  *  Blynk library  : https://github.com/blynkkk/blynk-library/releases/latest
  **********************************************************************************/
+
+
 #include <BlynkSimpleEsp32.h>
 #include "BluetoothSerial.h" 
 BluetoothSerial SerialBT;
@@ -67,10 +69,33 @@ void handleEvent3(AceButton*, uint8_t, uint8_t);
 void handleEvent4(AceButton*, uint8_t, uint8_t);
 
 #define AUTH "egC9BZE_gmAD9mGqwuzrkzq6vuwbHFmR"       //FWdYV4uhU-h0TJfklATFmJA9TDvkJOPZ You should get Auth Token in the Blynk App.  
-#define WIFI_SSID "Mane"            //Enter Wifi Name
-#define WIFI_PASS "mh12hv3842"       //Enter wifi Password
+//#define WIFI_SSID "Mane"            //Enter Wifi Name
+//#define WIFI_PASS "mh12hv3842"       //Enter wifi Password
 
 // When App button is pushed - switch the state
+//
+//boolean confirmRequestPending = true;
+//
+//void BTConfirmRequestCallback(uint32_t numVal)
+//{
+//  confirmRequestPending = true;
+//  Serial.println(numVal);
+//}
+//
+//void BTAuthCompleteCallback(boolean success)
+//{
+//  confirmRequestPending = false;
+//  if (success)
+//  {
+//    Serial.println("Pairing success!!");
+//  }
+//  else
+//  {
+//    Serial.println("Pairing failed, rejected by user!!");
+//  }
+//}
+
+
 
 BLYNK_WRITE(VPIN_BUTTON_1) {
   toggleState_1 = param.asInt();
@@ -166,7 +191,8 @@ void checkBlynkStatus()
 
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
+  
   EEPROM.begin(100);  
   btStart();  //Serial.println("Bluetooth On");
   
@@ -180,8 +206,13 @@ void setup()
     Serial.print("SSID : ");Serial.println(creden.getSsid());
     Serial.print("Password : ");Serial.println(creden.getPass());
   }
-  
+//   SerialBT.enableSSP();
+//  SerialBT.onConfirmRequest(BTConfirmRequestCallback);
+//  SerialBT.onAuthComplete(BTAuthCompleteCallback);
+//   SerialBT.pinCode("1234");
   SerialBT.begin("MIBAiO_BLE3"); //Bluetooth device name
+//   char key[]={'1','2','3','4'};
+//   SerialBT.setPin(key);
   Serial.println("The device started, now you can pair it with bluetooth!");
   delay(500);
 
@@ -237,7 +268,7 @@ void setup()
   button3.init(SwitchPin3);
   button4.init(SwitchPin4);
 
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
+//  WiFi.begin(WIFI_SSID, WIFI_PASS);
   timer.setInterval(3000L, checkBlynkStatus); // check if Blynk server is connected every 3 seconds
   Blynk.config(AUTH);
   delay(1000);
@@ -252,7 +283,7 @@ void loop()
   else
   {
     //Serial.println("WiFi Connected");
-    Blynk.run();
+//    Blynk.run();
   }
 
   timer.run(); // Initiates SimpleTimer

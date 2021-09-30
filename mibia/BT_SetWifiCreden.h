@@ -21,12 +21,11 @@ class WifiCerden{
     String getPass()
     {
       Password="";
-      for (int i = 25; i < (int)EEPROM.read(57); ++i)
+      for (int i = 25; i < 25 +(int)EEPROM.read(58); ++i)
       {
          Password += char(EEPROM.read(i));
       }
       return Password;
-      
     }
     void displayAvailSSID()
     {
@@ -45,12 +44,12 @@ class WifiCerden{
         for (int i = 0; i < ssCount; ++i)
         {
           // Print SSID and RSSI for each network found
-          Serial.print(i + 1);
-          Serial.print(": ");
-          Serial.print(WiFi.SSID(i));
-          Serial.print(" (");
-          Serial.print(WiFi.RSSI(i));
-          Serial.print(")");
+          SerialBT.print(i + 1);
+          SerialBT.print(": ");
+          SerialBT.print(WiFi.SSID(i));
+          SerialBT.print(" (");
+          SerialBT.print(WiFi.RSSI(i));
+          SerialBT.print(")\n");
 //          Serial.println((WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " " : "*");
           delay(10);
         }
@@ -61,12 +60,12 @@ class WifiCerden{
       displayAvailSSID();
       Serial.println("Please Enter SSID and Passwords with in a min in separete line");
       long long int prev = millis();
-      while(prev + 60000 > millis())
+      while(prev + 600000 > millis())
       {
         if(SerialBT.available())
         {
-          SSId = SerialBT.readStringUntil(' ');
-          Password = SerialBT.readStringUntil(' ');
+          SSId = SerialBT.readStringUntil('^');
+          Password = SerialBT.readStringUntil('^');
           Serial.print("Recived SSID = ");Serial.println(SSId);
           Serial.print("Recived password = ");Serial.println(Password);
           SerialBT.print("Recived SSID = ");SerialBT.println(SSId);
@@ -76,7 +75,7 @@ class WifiCerden{
             EEPROM.write(i, 0);
           }
           EEPROM.write(56,SSId.length());
-          EEPROM.write(57,Password.length());
+          EEPROM.write(58,Password.length());
           Serial.println("writing eeprom ssid:");
           for (int i = 0; i < SSId.length(); ++i)
           {
@@ -116,7 +115,7 @@ class WifiCerden{
         Serial.print(".");
         delay(5000);
         Serial.println("WIfi not connected");
-        WiFi.begin(SSId.c_str(), Password.c_str());
+        WiFi.begin(getSsid().c_str(), getPass().c_str());
         count--;
       }
       if(WiFi.status() != WL_CONNECTED) 
