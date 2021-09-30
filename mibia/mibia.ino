@@ -8,7 +8,6 @@
  **********************************************************************************/
 
 
-#include <BlynkSimpleEsp32.h>
 #include "BluetoothSerial.h" 
 BluetoothSerial SerialBT;
 #include "EEPROM.h"
@@ -25,27 +24,28 @@ using namespace ace_button;
 #endif
 
 WifiCerden creden;
-BlynkTimer timer;
-
 // define the GPIO connected with Relays
 #define RelayPin1 15  //23  //D23
 #define RelayPin2 2   //22  //D22
 #define RelayPin3 4   //21  //D21
 #define RelayPin4 22  //19  //D19
+
 // define the GPIO connected with switches
 #define SwitchPin1 32  //13  //D13
 #define SwitchPin2 35  //12  //D12
 #define SwitchPin3 34  //14  //D14
 #define SwitchPin4 39  //27  //D27
+
 //Manual Internet Bluetooth LEDs
 #define LED1 26
 #define LED2 25
 #define LED3 27
+
 //Virtual pins for Blynk 
-#define VPIN_BUTTON_1    V1 
-#define VPIN_BUTTON_2    V2
-#define VPIN_BUTTON_3    V3 
-#define VPIN_BUTTON_4    V4
+//#define VPIN_BUTTON_1    V1 
+//#define VPIN_BUTTON_2    V2
+//#define VPIN_BUTTON_3    V3 
+//#define VPIN_BUTTON_4    V4
 
 int toggleState_1 = 1; //Define integer to remember the toggle state for relay 1
 int toggleState_2 = 1; //Define integer to remember the toggle state for relay 2
@@ -68,63 +68,29 @@ void handleEvent2(AceButton*, uint8_t, uint8_t);
 void handleEvent3(AceButton*, uint8_t, uint8_t);
 void handleEvent4(AceButton*, uint8_t, uint8_t);
 
-#define AUTH "egC9BZE_gmAD9mGqwuzrkzq6vuwbHFmR"       //FWdYV4uhU-h0TJfklATFmJA9TDvkJOPZ You should get Auth Token in the Blynk App.  
-//#define WIFI_SSID "Mane"            //Enter Wifi Name
-//#define WIFI_PASS "mh12hv3842"       //Enter wifi Password
 
-// When App button is pushed - switch the state
-//
-//boolean confirmRequestPending = true;
-//
-//void BTConfirmRequestCallback(uint32_t numVal)
-//{
-//  confirmRequestPending = true;
-//  Serial.println(numVal);
-//}
-//
-//void BTAuthCompleteCallback(boolean success)
-//{
-//  confirmRequestPending = false;
-//  if (success)
-//  {
-//    Serial.println("Pairing success!!");
-//  }
-//  else
-//  {
-//    Serial.println("Pairing failed, rejected by user!!");
-//  }
-//}
+//=============================================BluetoothAuth=======================================================//
+boolean confirmRequestPending = false;
 
-
-
-BLYNK_WRITE(VPIN_BUTTON_1) {
-  toggleState_1 = param.asInt();
-  digitalWrite(RelayPin1, toggleState_1);
-}
-
-BLYNK_WRITE(VPIN_BUTTON_2) {
-  toggleState_2 = param.asInt();
-  digitalWrite(RelayPin2, toggleState_2);
-}
-
-BLYNK_WRITE(VPIN_BUTTON_3) {
-  toggleState_3 = param.asInt();
-  digitalWrite(RelayPin3, toggleState_3);
-}
-
-BLYNK_WRITE(VPIN_BUTTON_4) {
-  toggleState_4 = param.asInt();
-  digitalWrite(RelayPin4, toggleState_4);
-}
-
-BLYNK_CONNECTED() 
+void BTConfirmRequestCallback(uint32_t numVal)
 {
-  // Request the latest state from the server
-  Blynk.syncVirtual(VPIN_BUTTON_1);
-  Blynk.syncVirtual(VPIN_BUTTON_2);
-  Blynk.syncVirtual(VPIN_BUTTON_3);
-  Blynk.syncVirtual(VPIN_BUTTON_4);
+  confirmRequestPending = true;
+  Serial.println(numVal);
 }
+
+void BTAuthCompleteCallback(boolean success)
+{
+  confirmRequestPending = false;
+  if (success)
+  {
+    Serial.println("Pairing success!!");
+  }
+  else
+  {
+    Serial.println("Pairing failed, rejected by user!!");
+  }
+}
+//===============================================================================================================//
 
 
 void all_Switch_ON()
@@ -146,7 +112,7 @@ void all_Switch_OFF()
 void Bluetooth_handle()
 {
   bt_data = SerialBT.read();
-//  Serial.println(bt_data);
+  Serial.println(bt_data);
   delay(20);
 
   switch(bt_data)
@@ -160,33 +126,14 @@ void Bluetooth_handle()
         case 'D': digitalWrite(RelayPin4, LOW);  toggleState_4 = 0; break; // if 'D' received Turn on Relay4
         case 'd': digitalWrite(RelayPin4, HIGH); toggleState_4 = 1; break; // if 'd' received Turn off Relay4
         case 'E':
-                  creden.configWifiCredentials();
+                  creden.configWifiCredentials(); //For configuring Wifi Credentials
                   break;
-        case 'F': creden.ConnectToWifi();
+        case 'F': creden.ConnectToWifi(); //To make attempt to connect Wifi
                   break;
         case 'Z': all_Switch_ON(); break;  // if 'Z' received Turn on all Relays
         case 'z': all_Switch_OFF(); break; // if 'z' received Turn off all Relays
         default : break;
       }
-}
-
-void checkBlynkStatus() 
-{ // called every 3 seconds by SimpleTimer
-  bool isconnected = Blynk.connected();
-  if (isconnected == false) 
-  {
-    wifiFlag = 1;
-    digitalWrite(LED1, HIGH);
-    digitalWrite(LED2, LOW);
-    digitalWrite(LED3, HIGH); //Manual-Bluetooth mode
-  }
-  if (isconnected == true) 
-  {
-    wifiFlag = 0;
-    digitalWrite(LED1, HIGH);
-    digitalWrite(LED2, HIGH);
-    digitalWrite(LED3, LOW); //Manual-Internet mode
-  }
 }
 
 void setup()
@@ -206,13 +153,12 @@ void setup()
     Serial.print("SSID : ");Serial.println(creden.getSsid());
     Serial.print("Password : ");Serial.println(creden.getPass());
   }
-//   SerialBT.enableSSP();
-//  SerialBT.onConfirmRequest(BTConfirmRequestCallback);
-//  SerialBT.onAuthComplete(BTAuthCompleteCallback);
-//   SerialBT.pinCode("1234");
+  
+  SerialBT.enableSSP();
+  SerialBT.onConfirmRequest(BTConfirmRequestCallback);
+  SerialBT.onAuthComplete(BTAuthCompleteCallback);
   SerialBT.begin("MIBAiO_BLE3"); //Bluetooth device name
-//   char key[]={'1','2','3','4'};
-//   SerialBT.setPin(key);
+  
   Serial.println("The device started, now you can pair it with bluetooth!");
   delay(500);
 
@@ -229,6 +175,7 @@ void setup()
   pinMode(LED1, OUTPUT);
   pinMode(LED2, OUTPUT);
   pinMode(LED3, OUTPUT);
+  
 //  pinMode(Buzzer, OUTPUT);
   digitalWrite(LED1, HIGH);
   delay(200);
@@ -252,52 +199,43 @@ void setup()
   digitalWrite(LED1, LOW);
   digitalWrite(LED2, LOW);
   digitalWrite(LED3, LOW);  
+  
   //At the beginning all the relays are turned on/off according to their respective manual switch state
   digitalWrite(RelayPin1, digitalRead(SwitchPin1));
   digitalWrite(RelayPin2, digitalRead(SwitchPin2));
   digitalWrite(RelayPin3, digitalRead(SwitchPin3));
   digitalWrite(RelayPin4, digitalRead(SwitchPin4));
-
+  
   config1.setEventHandler(button1Handler);
   config2.setEventHandler(button2Handler);
   config3.setEventHandler(button3Handler);
   config4.setEventHandler(button4Handler);
-
+  
   button1.init(SwitchPin1);
   button2.init(SwitchPin2);
   button3.init(SwitchPin3);
   button4.init(SwitchPin4);
-
-//  WiFi.begin(WIFI_SSID, WIFI_PASS);
-  timer.setInterval(3000L, checkBlynkStatus); // check if Blynk server is connected every 3 seconds
-  Blynk.config(AUTH);
   delay(1000);
 }
 
 void loop()
 {  
-  if (WiFi.status() != WL_CONNECTED)
+  if (confirmRequestPending)
   {
-   // Serial.println("WiFi Not Connected");
-  }
-  else
-  {
-    //Serial.println("WiFi Connected");
-//    Blynk.run();
-  }
-
-  timer.run(); // Initiates SimpleTimer
-  if (wifiFlag == 0)
-  {
-  }
-  else
-  {
-    if (SerialBT.available())
+    if (touchRead(T0)<50)
     {
-      Bluetooth_handle();
+      SerialBT.confirmReply(true);
     }
-  } 
-
+    else
+    {
+      SerialBT.confirmReply(false);
+    }
+    
+  }
+  if (SerialBT.available())
+  {
+    Bluetooth_handle();
+  }
   button1.check();
   button2.check();
   button3.check();
@@ -313,13 +251,11 @@ void button1Handler(AceButton* button, uint8_t eventType, uint8_t buttonState)
       Serial.println("kEventPressed");
       toggleState_1 = 0;
       digitalWrite(RelayPin1, LOW);
-      Blynk.virtualWrite(VPIN_BUTTON_1, toggleState_1);   // Update Button Widget  
       break;
     case AceButton::kEventReleased:
       Serial.println("kEventReleased");
       toggleState_1 = 1;
       digitalWrite(RelayPin1, HIGH);
-      Blynk.virtualWrite(VPIN_BUTTON_1, toggleState_1);   // Update Button Widget  
       break;
   }
 }
@@ -333,13 +269,11 @@ void button2Handler(AceButton* button, uint8_t eventType, uint8_t buttonState)
       Serial.println("kEventPressed");
       toggleState_2 = 0;
       digitalWrite(RelayPin2, LOW);
-      Blynk.virtualWrite(VPIN_BUTTON_2, toggleState_2);   // Update Button Widget  
       break;
     case AceButton::kEventReleased:
       Serial.println("kEventReleased");
       toggleState_2 = 1;
       digitalWrite(RelayPin2, HIGH);
-      Blynk.virtualWrite(VPIN_BUTTON_2, toggleState_2);   // Update Button Widget  
       break;
   }
 }
@@ -353,13 +287,11 @@ void button3Handler(AceButton* button, uint8_t eventType, uint8_t buttonState)
       Serial.println("kEventPressed");
       toggleState_3 = 0;
       digitalWrite(RelayPin3, LOW);
-      Blynk.virtualWrite(VPIN_BUTTON_3, toggleState_3);   // Update Button Widget  
       break;
     case AceButton::kEventReleased:
       Serial.println("kEventReleased");
       toggleState_3 = 1;
       digitalWrite(RelayPin3, HIGH);
-      Blynk.virtualWrite(VPIN_BUTTON_3, toggleState_3);   // Update Button Widget  
       break;
   }
 }
@@ -373,13 +305,11 @@ void button4Handler(AceButton* button, uint8_t eventType, uint8_t buttonState)
       Serial.println("kEventPressed");
       toggleState_4 = 0;
       digitalWrite(RelayPin4, LOW);
-      Blynk.virtualWrite(VPIN_BUTTON_4, toggleState_4);   // Update Button Widget  
       break;
     case AceButton::kEventReleased:
       Serial.println("kEventReleased");
       toggleState_4 = 1;
       digitalWrite(RelayPin4, HIGH);
-      Blynk.virtualWrite(VPIN_BUTTON_4, toggleState_4);   // Update Button Widget  
       break;
   }
 }

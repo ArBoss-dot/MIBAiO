@@ -33,14 +33,14 @@ class WifiCerden{
       WiFi.disconnect();
       delay(50);
       int ssCount = WiFi.scanNetworks();
-      Serial.println("Scannig Done");
+      SerialBT.println("Scannig Done");
       if(ssCount == 0)
       {
-        Serial.println("No Networks Found");
+        SerialBT.println("No Networks Found");
       }
       else
       {
-        Serial.print(ssCount);Serial.println(" Networks Fount");
+        SerialBT.print(ssCount);Serial.println(" Networks Fount");
         for (int i = 0; i < ssCount; ++i)
         {
           // Print SSID and RSSI for each network found
@@ -105,25 +105,25 @@ class WifiCerden{
       }
       if(isCredAvil())
       {
-        Serial.println("Wifi Credentials are avilable");
-        Serial.print("SSID : ");Serial.println(getSsid());
-        Serial.print("Password : ");Serial.println(getPass());
+        SerialBT.println("Wifi Credentials are avilable");
+        SerialBT.print("SSID : ");SerialBT.println(getSsid());
+        SerialBT.print("Password : ");SerialBT.println(getPass());
       }    
       int count = 3;
       while ((WiFi.status() != WL_CONNECTED) && count)
       {
-        Serial.print(".");
         delay(5000);
-        Serial.println("WIfi not connected");
+        SerialBT.print(count+" : ");
+        SerialBT.println("Retrying to connect to wifi network");
         WiFi.begin(getSsid().c_str(), getPass().c_str());
         count--;
       }
       if(WiFi.status() != WL_CONNECTED) 
       {
-        Serial.print("Not able to connect to Wifi");
+        SerialBT.print("Not able to connect to Wifi make sure given SSID and Password are Correct");
       }
       else {
-        Serial.print("Connected to Wifi");
+        SerialBT.print("Connected to Wifi");
       }
       
     }
