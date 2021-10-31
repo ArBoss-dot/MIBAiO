@@ -4,6 +4,7 @@ class WifiCerden{
     bool credAvailStatus;
 
   public:
+
     bool isCredAvil()
     {
       credAvailStatus = EEPROM.readBool(55);
